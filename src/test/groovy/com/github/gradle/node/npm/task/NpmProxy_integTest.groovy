@@ -13,7 +13,7 @@ import static org.mockserver.verify.VerificationTimes.exactly
 class NpmProxy_integTest extends AbstractIntegTest {
     private ClientAndServer proxyMockServer
 
-    void setup() {
+    def setup() {
         proxyMockServer = startClientAndServer(PortFactory.findFreePort())
     }
 
@@ -21,8 +21,10 @@ class NpmProxy_integTest extends AbstractIntegTest {
         proxyMockServer.stop()
     }
 
-    def 'install packages using proxy'(boolean secure, boolean ignoreHost) {
+    def 'install packages using proxy (#gv.version)'(boolean secure, boolean ignoreHost) {
         given:
+        gradleVersion = gv
+
         copyResources("fixtures/npm-proxy/")
         copyResources("fixtures/proxy/")
         def proxyTestHelper = new ProxyTestHelper(projectDir)
@@ -50,6 +52,7 @@ class NpmProxy_integTest extends AbstractIntegTest {
         }
 
         where:
+        gv << GRADLE_VERSIONS_UNDER_TEST
         secure | ignoreHost
         false  | false
         false  | true
@@ -58,8 +61,10 @@ class NpmProxy_integTest extends AbstractIntegTest {
         // true   | true
     }
 
-    def 'install packages using pre-configured proxy'() {
+    def 'install packages using pre-configured proxy (#gv.version)'() {
         given:
+        gradleVersion = gv
+
         copyResources("fixtures/npm-proxy/")
         copyResources("fixtures/proxy/")
         def proxyTestHelper = new ProxyTestHelper(projectDir)
@@ -88,5 +93,8 @@ class NpmProxy_integTest extends AbstractIntegTest {
                 .withPath("/case")
                 .withHeader("Host", "registry.npmjs.org.*"),
                 exactly(1))
+
+        where:
+        gv << GRADLE_VERSIONS_UNDER_TEST
     }
 }

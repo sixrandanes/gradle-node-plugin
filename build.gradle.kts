@@ -46,7 +46,9 @@ dependencies {
     testImplementation("cglib:cglib-nodep:3.3.0")
     testImplementation("org.objenesis:objenesis:3.1")
     testImplementation("org.apache.commons:commons-io:1.3.2")
-    testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
+    testImplementation(platform("org.spockframework:spock-bom:2.0-groovy-3.0"))
+    testImplementation("org.spockframework:spock-core")
+    testImplementation("org.spockframework:spock-junit4")
     testImplementation("com.github.stefanbirkner:system-rules:1.19.0")
     testImplementation("org.mock-server:mockserver-netty:5.11.1")
 }
@@ -60,20 +62,14 @@ tasks.compileTestGroovy {
     classpath += files("${buildDir}/classes/kotlin/test")
 }
 
-tasks.test {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+
     if (project.hasProperty("skipIT")) {
         exclude("**/*_integTest*")
     } else if (project.hasProperty("onlyIT")) {
         include("**/*_integTest*")
     }
-    systemProperty("testAllSupportedGradleVersions", project.properties["testAllSupportedGradleVersions"] ?: "false")
-    systemProperty(
-        "testMinimumSupportedGradleVersion", project.properties["testMinimumSupportedGradleVersion"]
-            ?: "false"
-    )
-    systemProperty("testMinimumCurrentGradleVersion", project.properties["testMinimumCurrentGradleVersion"] ?: "false")
-    systemProperty("testCurrentGradleVersion", project.properties["testCurrentGradleVersion"] ?: "true")
 
     val processorsCount = Runtime.getRuntime().availableProcessors()
     maxParallelForks = if (processorsCount > 2) processorsCount.div(2) else processorsCount
@@ -88,6 +84,29 @@ tasks.test {
             includeClasses.add("*_integTest")
         }
     }
+}
+
+tasks.test {
+    systemProperty(
+        com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
+        project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
+    )
+}
+
+tasks.register<Test>("testGradleReleases") {
+    jvmArgumentProviders.add(
+        com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider(
+            com.github.gradle.buildlogic.GradleVersionData::getReleasedVersions
+        )
+    )
+}
+
+tasks.register<Test>("testGradleNightlies") {
+    jvmArgumentProviders.add(
+        com.github.gradle.buildlogic.GradleVersionsCommandLineArgumentProvider(
+            com.github.gradle.buildlogic.GradleVersionData::getNightlyVersions
+        )
+    )
 }
 
 tasks.register("runParameterTest", JavaExec::class.java) {

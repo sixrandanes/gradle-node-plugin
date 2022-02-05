@@ -6,8 +6,9 @@ import org.gradle.testkit.runner.TaskOutcome
 import java.util.regex.Pattern
 
 class NpmRule_integTest extends AbstractIntegTest {
-    def 'execute npm_install rule'() {
+    def 'execute npm_install rule (#gv.version)'() {
         given:
+        gradleVersion = gv
         writeBuild('''
             plugins {
                 id 'com.github.node-gradle.node'
@@ -20,30 +21,40 @@ class NpmRule_integTest extends AbstractIntegTest {
 
         then:
         result.outcome == TaskOutcome.SUCCESS
+
+        where:
+        gv << GRADLE_VERSIONS_UNDER_TEST
     }
 
-   def 'can configure npm_ rule task'() {
-        given:
-        writeBuild('''
-            plugins {
-                id 'com.github.node-gradle.node'
-            }
+   def 'can configure npm_ rule task (#gv.version)'() {
+       given:
+       gradleVersion = gv
 
-            npm_run_build {
-                doFirst { project.logger.info('configured') }
-            }
-        ''')
-        writeEmptyPackageJson()
+       writeBuild('''
+           plugins {
+               id 'com.github.node-gradle.node'
+           }
 
-        when:
-        def result = buildTask('help')
+           npm_run_build {
+               doFirst { project.logger.info('configured') }
+           }
+       ''')
+       writeEmptyPackageJson()
 
-        then:
-        result.outcome == TaskOutcome.SUCCESS
+       when:
+       def result = buildTask('help')
+
+       then:
+       result.outcome == TaskOutcome.SUCCESS
+
+       where:
+       gv << GRADLE_VERSIONS_UNDER_TEST
    }
 
-    def 'can execute an npm module using npm_run_'() {
+    def 'can execute an npm module using npm_run_ (#gv.version)'() {
         given:
+        gradleVersion = gv
+
         writeBuild('''
             plugins {
                 id 'com.github.node-gradle.node'
@@ -58,10 +69,15 @@ class NpmRule_integTest extends AbstractIntegTest {
         then:
         result.outcome == TaskOutcome.SUCCESS
         fileExists('test.txt')
+
+        where:
+        gv << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def 'succeeds to run npm module using npm_run_ when the package.json file contains local npm'() {
+    def 'succeeds to run npm module using npm_run_ when the package.json file contains local npm (#gv.version)'() {
         given:
+        gradleVersion = gv
+
         writeBuild('''
             plugins {
                 id 'com.github.node-gradle.node'
@@ -78,5 +94,8 @@ class NpmRule_integTest extends AbstractIntegTest {
         result.task(":npm_run_npmVersion").outcome == TaskOutcome.SUCCESS
         def versionPattern = Pattern.compile(".*Version\\s+6.12.0.*", Pattern.DOTALL)
         versionPattern.matcher(result.output).find()
+
+        where:
+        gv << GRADLE_VERSIONS_UNDER_TEST
     }
 }
