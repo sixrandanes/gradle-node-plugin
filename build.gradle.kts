@@ -74,7 +74,6 @@ tasks.test {
         "testMinimumSupportedGradleVersion", project.properties["testMinimumSupportedGradleVersion"]
             ?: "false"
     )
-    systemProperty("testMinimumCurrentGradleVersion", project.properties["testMinimumCurrentGradleVersion"] ?: "false")
     systemProperty("testCurrentGradleVersion", project.properties["testCurrentGradleVersion"] ?: "true")
     systemProperty("testSpecificGradleVersion", project.properties["testSpecificGradleVersion"] ?: "false")
 
